@@ -1,0 +1,5 @@
+- Apertar teclas
+- Exec com outros navegadores
+- Onde colocar os befores
+- Onde incluir a url do site
+- Entender modelo de cenario e testes
