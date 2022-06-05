@@ -1,0 +1,119 @@
+package br.com.bradseg.ovsm.painelmonitoramento.scheduler.util;
+
+import java.io.IOException;
+import java.security.Key;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.http.Header;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+
+public class ValidaTokenDataPower {
+
+    private static final String AMERICA_SAO_PAULO = "America/Sao_Paulo";
+    public static final String ERRO_AO_RETORNAR_TOKEN = "Erro ao retornar Token";
+    private String authorization = "Authorization";
+
+    public String recuperartokendatapower(String url, String tokendatapower) throws IOException {
+
+        HttpPost post = new HttpPost(url);
+        // add request parameter, form parameters
+        List<BasicNameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair("grant_type", "client_credentials"));
+        urlParameters.add(new BasicNameValuePair("scope", "web"));
+        urlParameters.add(new BasicNameValuePair("client_secret", "d1ba7bfbc3e94e46bf91a7e00dcb277f"));
+        urlParameters.add(new BasicNameValuePair("client_id", "ovms-bff-servicos"));
+        urlParameters.add(new BasicNameValuePair("token", tokendatapower));
+
+        post.setEntity(new UrlEncodedFormEntity(urlParameters));
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse response = httpClient.execute(post)) {
+
+            for (Header header : response.getAllHeaders()) {
+
+                if (header.getName().equalsIgnoreCase(authorization)) {
+                    return header.getValue();
+                }
+            }
+        }
+        return ERRO_AO_RETORNAR_TOKEN;
+    }
+
+    public String recuperartokendatapower(String url, String usuario, String senha) throws IOException {
+
+        HttpPost post = new HttpPost(url);
+        // add request parameter, form parameters
+        List<BasicNameValuePair> urlParameters = new ArrayList<>();
+        urlParameters.add(new BasicNameValuePair("grant_type", "password"));
+        urlParameters.add(new BasicNameValuePair("scope", "interno"));
+        urlParameters.add(new BasicNameValuePair("client_secret", "a93a740cb1754b0e9b60a7e00dcbaca7"));
+        urlParameters.add(new BasicNameValuePair("client_id", "usc-bff-bsademail"));
+        urlParameters.add(new BasicNameValuePair("username", usuario));
+        urlParameters.add(new BasicNameValuePair("password", senha));
+
+        post.setEntity(new UrlEncodedFormEntity(urlParameters));
+
+        try (CloseableHttpClient httpClient = HttpClients.createDefault();
+            CloseableHttpResponse response = httpClient.execute(post)) {
+
+            for (Header header : response.getAllHeaders()) {
+
+                if (header.getName().equalsIgnoreCase(authorization)) {
+                    return header.getValue();
+                }
+            }
+        }
+        return ERRO_AO_RETORNAR_TOKEN;
+    }
+
+    public String createJWT(String datapowerpwd) {
+
+        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+
+        long nowMillis = System.currentTimeMillis();
+
+        LocalDateTime now = Instant.ofEpochMilli(nowMillis)
+            .atZone(ZoneId.of(AMERICA_SAO_PAULO))
+            .toLocalDateTime();
+
+        final String SECRET_KEY = " tcr :  srv " + " usr : bssholovsm " + " pwd : bssholovsm";
+
+        byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
+        Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
+
+        Map map = new HashMap<String, Object>();
+        map.put("alg", "HS256");
+        map.put("typ", "JWT");
+
+        return Jwts.builder()
+            .setHeader(map)
+            .claim("iss", "bradesco")
+            .claim("aud", "datapower")
+            .claim("iat", Date.from(now.atZone(ZoneId.of(AMERICA_SAO_PAULO)).toInstant()))
+            .claim("exp", Date.from(now.atZone(ZoneId.of(AMERICA_SAO_PAULO)).toInstant()))
+            .claim("tcr", "srv")
+            .claim("usr", "bssholovsm")
+            .claim("pwd", datapowerpwd)
+            .signWith(SignatureAlgorithm.HS256, signingKey)
+            .compact();
+    }
+
+}
