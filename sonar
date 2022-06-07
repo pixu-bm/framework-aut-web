@@ -1,0 +1,8 @@
+sonar.projectKey=ovsm-srv-monitoramento-key
+sonar.projectName=ovsm-srv-monitoramento
+sonar.sourceEncoding=UTF-8
+sonar.language=java
+sonar.sources=src
+sonar.java.binaries=target
+sonar.exclusions=**/test/**
+sonar.javascript.lcov.reportPaths=coverage/lcov.info
